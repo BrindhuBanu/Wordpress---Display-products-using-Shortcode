@@ -1,0 +1,85 @@
+// Custom shortcode to display products by ID
+function display_products_by_id_shortcode($atts) {
+
+    // Shortcode attributes
+    $atts = shortcode_atts(array(
+        'ids' => '', 
+    ), $atts, 'products_by_id');
+
+    // Check if IDs are provided
+    if (!empty($atts['ids'])) {
+        $ids_array = explode(',', $atts['ids']);
+
+        // Query arguments
+        $args = array(
+            'post_type'      => 'product',
+            'posts_per_page' => -1,
+            'post__in'       => $ids_array, 
+        );
+
+        // Get the products
+        $products_query = new WP_Query($args);
+
+        // Output products
+        ob_start();
+        if ($products_query->have_posts()) {
+            echo '<div class="avs_cat_prd">';
+            while ($products_query->have_posts()) {
+                $products_query->the_post();
+                global $product;
+                ?>
+                <div class="avs_product">
+                    <?php
+                    if (has_post_thumbnail()) {
+                        echo '<div class="avs_prdimg"><a href="' . get_permalink() . '">' . get_the_post_thumbnail($product->get_id(), 'thumbnail') . '</a></div>';
+                    }
+                    ?>
+
+                    <div class="product_details">
+                        <?php
+                        echo '<h2 class="product_title"><a href="' . get_permalink() . '">' . get_the_title() . '</a></h2>';
+                        echo '<span class="product_price">' . $product->get_price_html() . '</span>';
+
+                        // Additional information based on price range
+                        $price = floatval($product->get_price());
+                        if ($price >= 200 && $price < 500) {
+                            $subscription_per_month = ($price / 6);
+                            echo '<div class="additional_info"> $' . round($subscription_per_month) . '/mo with 6 Months <a href="https://authorizedvacandsew.com/synchromy-financing/">Learn More</a></div>';
+                        } elseif ($price >= 500 && $price < 700) {
+                            $subscription_per_month = ($price / 12);
+                            echo '<div class="additional_info"> $' . round($subscription_per_month) . '/mo with 12 Months <a href="https://authorizedvacandsew.com/synchromy-financing/">Learn More</a></div>';
+                        } elseif ($price >= 700 && $price < 1800) {
+                            $subscription_per_month = ($price / 18);
+                            echo '<div class="additional_info"> $' . round($subscription_per_month) . '/mo with 18 Months <a href="https://authorizedvacandsew.com/synchromy-financing/">Learn More</a></div>';
+                        } elseif ($price >= 1800 && $price < 3000) {
+                            $subscription_per_month = ($price / 24);
+                            echo '<div class="additional_info"> $' . round($subscription_per_month) . '/mo with 24 Months <a href="https://authorizedvacandsew.com/synchromy-financing/">Learn More</a></div>';
+                        } elseif ($price >= 3000 && $price < 5000) {
+                            $subscription_per_month = ($price / 36);
+                            echo '<div class="additional_info"> $' . round($subscription_per_month) . '/mo with 36 Months <a href="https://authorizedvacandsew.com/synchromy-financing/">Learn More</a></div>';
+                        } elseif ($price >= 5000 && $price < 21000) {
+                            $subscription_per_month = ($price / 48);
+                            echo '<div class="additional_info"> $' . round($subscription_per_month) . '/mo with 48 Months <a href="https://authorizedvacandsew.com/synchromy-financing/">Learn More</a></div>';
+                        }
+
+                        // Product rating
+                        if ($product->get_average_rating() > 0) {
+                            echo '<div class="product_rating">' . wc_get_rating_html($product->get_average_rating()) . '</div>';
+                        }
+                        ?>
+                    </div>
+                </div>
+                <?php
+            }
+            echo '</div>';
+        } else {
+            echo '<p>No products found with the specified IDs.</p>';
+        }
+        wp_reset_postdata();
+
+        return ob_get_clean();
+    } else {
+        return '<p>Please specify the IDs of the products.</p>';
+    }
+}
+add_shortcode('products_by_id', 'display_products_by_id_shortcode');
